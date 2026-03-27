@@ -20,22 +20,14 @@ class AuthController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             // `password` is cast as `hashed` in the User model, so we must store plain text.
-            'password' => $validated['password'],
+            'password' => Hash::make($validated['password']),
             'role' => 'customer',
             'email_verified_at' => now(),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        auth()->login($user);
 
-        return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-            'token' => $token,
-        ], 201);
+        return redirect()->route('home')->with('success', 'تم إنشاء الحساب بنجاح!');
     }
 
     public function login(Request $request)
@@ -48,22 +40,18 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
-            return response()->json([
-                'message' => 'Invalid credentials',
-            ], 401);
+            return back()->withErrors([
+                'email' => 'بيانات الدخول غير صحيحة',
+            ])->withInput();
         }
+
+        auth()->login($user);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-            'token' => $token,
-        ]);
+        return redirect()->route('home')->with('success', 'تم تسجيل الدخول بنجاح!');
+
+
     }
 
     public function logout(Request $request)
@@ -71,9 +59,9 @@ class AuthController extends Controller
         $token = $request->user()?->currentAccessToken();
         $token?->delete();
 
-        return response()->json([
-            'message' => 'Logged out',
-        ]);
+        auth()->logout(); // إضافة تسجيل الخروج من session
+
+        return redirect()->route('login.form')->with('success', 'تم تسجيل الخروج بنجاح');
     }
 }
 

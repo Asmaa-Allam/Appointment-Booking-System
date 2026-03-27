@@ -11,6 +11,11 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+
+    public function appointments()
+{
+    return $this->hasMany(\App\Models\Appointment::class);
+}
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 

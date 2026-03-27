@@ -3,21 +3,36 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Appointment;
 
 class AdminAppointmentController extends Controller
 {
-    public function index(Request $request)
+    // 👁️‍🗨️ عرض جميع الحجوزات
+    public function index()
     {
+        $appointments = Appointment::with('service', 'user')
+            ->orderBy('appointment_date', 'asc')
+            ->orderBy('appointment_time', 'asc')
+            ->get();
+
         return response()->json([
-            'message' => 'Not implemented yet',
-        ], 501);
+            'appointments' => $appointments
+        ]);
     }
 
-    public function updateStatus(Request $request, int $appointment)
+    // ✏️ تحديث حالة حجز معين
+    public function updateStatus(Appointment $appointment, Request $request)
     {
+        $request->validate([
+            'status' => 'required|in:booked,cancelled,completed'
+        ]);
+
+        $appointment->status = $request->status;
+        $appointment->save();
+
         return response()->json([
-            'message' => 'Not implemented yet',
-        ], 501);
+            'message' => 'Appointment status updated successfully',
+            'appointment' => $appointment
+        ]);
     }
 }
-
